@@ -1,0 +1,10 @@
+# venv
+.venv/
+__pycache__/
+
+# uv lock
+uv.lock
+
+# CSV & Pickle outputs
+*.csv
+*.pkl
