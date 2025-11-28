@@ -79,3 +79,53 @@ Run all cells in `sentiment_emotion_pipeline.ipynb` sequentially to:
 2. Apply sentiment analysis
 3. Detect emotions in the posts
 4. Generate visualizations and insights
+
+## Output Files
+
+The notebook generates `reddit_posts_with_sentiment_emotion.csv` with the following columns:
+
+### Basic Information
+
+- **id** - Unique Reddit post identifier
+- **city** - Canadian city associated with the post
+- **title** - Original post title
+- **selftext** - Original post body text
+- **combined_text** - Concatenated title and selftext used for analysis
+- **score** - Reddit post score (upvotes - downvotes)
+- **num_comments** - Number of comments on the post
+- **created_utc** - Post creation timestamp
+- **url** - Direct link to the Reddit post
+
+### Sentiment Analysis Results
+
+- **sentiment_consensus** - Final sentiment prediction based on majority vote from all models (`positive`, `negative`, or `neutral`)
+- **sentiment_roberta_label** - Sentiment from Twitter-RoBERTa model
+- **sentiment_roberta_score** - Confidence score for Twitter-RoBERTa prediction (0-1)
+- **sentiment_siebert_label** - Sentiment from SiEBERT model
+- **sentiment_siebert_score** - Confidence score for SiEBERT prediction (0-1)
+- **sentiment_bertweet_label** - Sentiment from BERTweet model
+- **sentiment_bertweet_score** - Confidence score for BERTweet prediction (0-1)
+
+### Emotion Analysis Results
+
+- **emotion_roberta_primary** - Primary emotion from Twitter-RoBERTa emotion model
+- **emotion_roberta_primary_score** - Confidence score for primary emotion (0-1)
+- **emotion_distilroberta_primary** - Primary emotion from DistilRoBERTa model (7 basic emotions)
+- **emotion_distilroberta_primary_score** - Confidence score for primary emotion (0-1)
+- **emotion_multilabel_labels** - Comma-separated list of emotions detected by multi-label model
+- **emotion_goemotions_top3** - Top 3 emotions from GoEmotions model (Reddit-specific, 28 emotions)
+
+### Models Used
+
+**Sentiment Analysis (3 models):**
+
+- Twitter-RoBERTa (CardiffNLP) - Social media optimized
+- SiEBERT (RoBERTa-large) - General purpose
+- BERTweet - Social media specific
+
+**Emotion Classification (4 models):**
+
+- Twitter-RoBERTa (single-label) - Basic emotions
+- Twitter-RoBERTa (multi-label) - Multiple emotions per post
+- GoEmotions - Reddit-specific with 28 emotion categories
+- DistilRoBERTa - 7 basic emotions (6 Ekman + neutral)
