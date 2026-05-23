@@ -2,3 +2,9 @@ numpy
 scipy
 pandas
 praw
+bertopic
+sentence-transformers
+umap-learn
+hdbscan
+scikit-learn
+nbformat
