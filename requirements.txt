@@ -8,3 +8,8 @@ umap-learn
 hdbscan
 scikit-learn
 nbformat
+transformers
+accelerate
+safetensors
+python-dotenv
+bitsandbytes
