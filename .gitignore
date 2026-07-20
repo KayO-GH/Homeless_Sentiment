@@ -6,6 +6,7 @@ __pycache__/
 # uv lock
 uv.lock
 
-# CSV & Pickle outputs
+# CSV, Pickle and JSON outputs
 *.csv
 *.pkl
+*.jsonl

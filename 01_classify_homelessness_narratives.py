@@ -3,7 +3,7 @@
 
 Usage:
   export OPENAI_API_KEY='...'
-  python classify_homelessness_narratives.py --input "upload/draft working sample for Kay0(3).csv"
+  python 01_classify_homelessness_narratives.py --input "input.csv"
 
 The script saves a resumable JSONL checkpoint and validates the final CSV.
 """
@@ -11,6 +11,7 @@ The script saves a resumable JSONL checkpoint and validates the final CSV.
 from __future__ import annotations
 
 import argparse
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import json
 import os
 import random
@@ -205,10 +206,20 @@ def main() -> None:
     parser.add_argument("--input", required=True, type=Path)
     parser.add_argument("--output", default="homelessness_narrative_topic_classification.csv", type=Path)
     parser.add_argument("--checkpoint", default="homelessness_classification_checkpoint.jsonl", type=Path)
+    parser.add_argument(
+        "--workers",
+        "--threads",
+        dest="workers",
+        default=12,
+        type=int,
+        help="Number of concurrent classification requests (default: 12).",
+    )
     args = parser.parse_args()
 
     if not os.environ.get("OPENAI_API_KEY"):
         raise RuntimeError("OPENAI_API_KEY is not set.")
+    if args.workers < 1:
+        raise ValueError("--workers must be at least 1.")
     random.seed(SEED)
     source = pd.read_csv(args.input, dtype=object)
     missing = [c for c in REQUIRED_COLUMNS if c not in source.columns]
@@ -219,13 +230,43 @@ def main() -> None:
     done = load_checkpoint(args.checkpoint)
     labels: list[dict[str, str] | None] = [done.get(i) for i in range(len(carried))]
 
+    pending = [
+        (i, text_for_prompt(row["text"]), text_for_prompt(row["city"]))
+        for i, row in carried.iterrows()
+        if labels[i] is None
+    ]
+    completed = len(carried) - len(pending)
+    failures: list[tuple[int, Exception]] = []
+
     with args.checkpoint.open("a", encoding="utf-8") as checkpoint:
-        for i, row in carried.iterrows():
-            if labels[i] is None:
-                labels[i] = classify(text_for_prompt(row["text"]), text_for_prompt(row["city"]))
-                checkpoint.write(json.dumps({"row_index": i, "result": labels[i]}, ensure_ascii=False) + "\n")
+        with ThreadPoolExecutor(max_workers=args.workers) as executor:
+            futures = {
+                executor.submit(classify, text, city): i
+                for i, text, city in pending
+            }
+            for future in as_completed(futures):
+                i = futures[future]
+                try:
+                    labels[i] = future.result()
+                except Exception as exc:
+                    failures.append((i, exc))
+                    print(f"ERROR row {i + 1}: {exc}", file=sys.stderr, flush=True)
+                    continue
+
+                checkpoint.write(
+                    json.dumps(
+                        {"row_index": i, "result": labels[i]},
+                        ensure_ascii=False,
+                    )
+                    + "\n"
+                )
                 checkpoint.flush()
-                print(f"Classified {i + 1}/{len(carried)}", flush=True)
+                completed += 1
+                print(f"Classified {completed}/{len(carried)}", flush=True)
+
+    if failures:
+        rows = ", ".join(str(i + 1) for i, _ in failures)
+        raise RuntimeError(f"Classification failed for row(s): {rows}")
 
     output = pd.concat([carried.reset_index(drop=True), pd.DataFrame(labels)], axis=1)
     validate(carried.reset_index(drop=True), output)

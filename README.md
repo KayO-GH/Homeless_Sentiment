@@ -1,6 +1,6 @@
 # Homeless Sentiment Analysis
 
-This project analyzes Canadian homelessness-related Reddit posts for sentiment and emotion detection.
+This project analyzes Canadian homelessness-related Reddit posts for narrative classification and emotion detection.
 
 ## Prerequisites
 
@@ -48,30 +48,81 @@ After installation, you may need to restart your terminal or add uv to your PATH
    - Install all required dependencies from `pyproject.toml`
    - Lock dependencies for reproducible builds
 
-3. **Run the sentiment analysis pipeline**:
+3. **Run the numbered CSV workflow** described below.
 
-   Open the Jupyter notebook `sentiment_emotion_pipeline.ipynb` in your preferred environment:
+The original exploratory notebook remains available for analysis and visualization. Open
+`sentiment_emotion_pipeline.ipynb` in VS Code using the kernel created by `uv`, or start
+Jupyter with:
 
-   - **VS Code**: Open the notebook file and select the kernel created by uv
-   - **Jupyter Lab/Notebook**:
+```bash
+uv run jupyter lab
+```
 
-     ```bash
-     uv run jupyter lab
-     ```
+Then navigate to `sentiment_emotion_pipeline.ipynb` and run the cells.
 
-     Then navigate to `sentiment_emotion_pipeline.ipynb` and run the cells
+## Script Workflow
+
+The recommended workflow is a three-stage pipeline. Each stage writes a new CSV that becomes the input to the next stage:
+
+```mermaid
+flowchart LR
+    A[Clean Reddit posts CSV] --> B[01: classify narratives/topics]
+    B --> C[Classification CSV]
+    C --> D[02: add created_utc]
+    D --> E[Timestamp-enriched CSV]
+    E --> F[03: label top emotion]
+    F --> G[Final CSV with emotion and score]
+```
+
+### 1. Classify narratives and specific topics
+
+Set an OpenAI API key, then run the multithreaded classifier. It uses 12 workers by default and saves a resumable checkpoint:
+
+```bash
+export OPENAI_API_KEY="your-api-key"
+
+uv run python 01_classify_homelessness_narratives.py \
+  --input homeless_reddit_04-05-2026_clean_posts.csv \
+  --output homelessness_narrative_topic_classification.csv
+```
+
+Reduce concurrency if needed with `--workers 4`. The input must contain `post_id`, `text`, `city`, and `url`.
+
+### 2. Add and normalize `created_utc`
+
+Match the original post metadata to the classification output using `post_id`:
+
+```bash
+uv run python 02_add_created_utc.py
+```
+
+This creates `homelessness_narrative_topic_classification_with_created_utc.csv` and formats timestamps as `YYYY-MM-DD HH:MM:SS`.
+
+### 3. Add the top emotion and score
+
+The final script downloads and runs `cardiffnlp/twitter-roberta-base-emotion-multilabel-latest` from Hugging Face. It selects the highest-scoring emotion for each non-empty `text` value:
+
+```bash
+uv run python 03_emotion_labeling.py \
+  --input homelessness_narrative_topic_classification_with_created_utc.csv
+```
+
+This creates `homelessness_narrative_topic_classification_with_created_utc_with_emotion.csv` with two additional columns: `emotion` and `emotion_score`. Use `--batch-size 8` to reduce memory usage.
 
 ## Project Structure
 
 - `canadian_homelessness_reddit_posts.csv` - Raw Reddit post data
 - `reddit_posts_with_sentiment_emotion.csv` - Processed data with sentiment/emotion labels
-- `sentiment_emotion_pipeline.ipynb` - Main analysis notebook
+- `01_classify_homelessness_narratives.py` - OpenAI narrative/topic classification
+- `02_add_created_utc.py` - Add and normalize timestamps using `post_id`
+- `03_emotion_labeling.py` - Hugging Face top-emotion labeling
+- `sentiment_emotion_pipeline.ipynb` - Exploratory sentiment/emotion analysis notebook
 - `redditCrawl.ipynb` - Data collection notebook
 - `main.py` - Python script version
 - `pyproject.toml` - Project dependencies and configuration
 - `requirements.txt` - Legacy requirements file
 
-## Usage
+## Notebook Usage
 
 Run all cells in `sentiment_emotion_pipeline.ipynb` sequentially to:
 
