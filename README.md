@@ -112,6 +112,16 @@ uv run python 03_emotion_labeling.py \
 
 This creates `homelessness_narrative_topic_classification_with_created_utc_with_emotion.csv` with two additional columns: `emotion` and `emotion_score`. Use `--batch-size 8` to reduce memory usage.
 
+### 4. Generate narrative word clouds
+
+Create an aggregate cloud for all relevant narrative categories plus one cloud for each of the four substantive narratives:
+
+```bash
+uv run python 04_word_clouds.py
+```
+
+The script reads `homelessness_narrative_topic_classification.csv` by default and saves the following PNGs to `wordclouds/`: `all_narratives.png`, `housing_crisis.png`, `public_life_crisis.png`, `society_moral_crisis.png`, and `governance_and_policy_challenge.png`. It removes English and French stopwords as well as homelessness terms that would otherwise dominate the clouds. Use `--input <csv>` and `--output-dir <directory>` to override the default paths.
+
 ## Project Structure
 
 - `canadian_homelessness_reddit_posts.csv` - Raw Reddit post data
@@ -119,6 +129,7 @@ This creates `homelessness_narrative_topic_classification_with_created_utc_with_
 - `01_classify_homelessness_narratives.py` - OpenAI narrative/topic classification
 - `02_add_created_utc.py` - Add and normalize timestamps using `post_id`
 - `03_emotion_labeling.py` - Hugging Face top-emotion labeling
+- `04_word_clouds.py` - Narrative-specific word-cloud generation
 - `sentiment_emotion_pipeline.ipynb` - Exploratory sentiment/emotion analysis notebook
 - `redditCrawl.ipynb` - Data collection notebook
 - `main.py` - Python script version

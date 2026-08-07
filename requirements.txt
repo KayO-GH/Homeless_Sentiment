@@ -13,3 +13,5 @@ accelerate
 safetensors
 python-dotenv
 bitsandbytes
+nltk
+wordcloud
