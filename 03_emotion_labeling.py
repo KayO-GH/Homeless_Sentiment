@@ -12,6 +12,7 @@ from transformers import pipeline
 
 
 MODEL = "cardiffnlp/twitter-roberta-base-emotion-multilabel-latest"
+DEFAULT_INPUT = Path("homelessness_narrative_topic_classification_with_created_utc.csv")
 
 
 def select_device() -> int | torch.device:
@@ -24,7 +25,12 @@ def select_device() -> int | torch.device:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--input", required=True, type=Path)
+    parser.add_argument(
+        "--input",
+        default=DEFAULT_INPUT,
+        type=Path,
+        help=f"Input CSV file (default: {DEFAULT_INPUT})",
+    )
     parser.add_argument("--output", type=Path)
     parser.add_argument("--batch-size", default=16, type=int)
     args = parser.parse_args()

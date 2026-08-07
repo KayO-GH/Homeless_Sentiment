@@ -83,10 +83,13 @@ export OPENAI_API_KEY="your-api-key"
 
 uv run python 01_classify_homelessness_narratives.py \
   --input homeless_reddit_04-05-2026_clean_posts.csv \
-  --output homelessness_narrative_topic_classification.csv
+  --output homelessness_narrative_topic_classification.csv \
+  --checkpoint homelessness_classification_checkpoint_revised_themes.jsonl
 ```
 
 Reduce concurrency if needed with `--workers 4`. The input must contain `post_id`, `text`, `city`, and `url`.
+
+The revised themes taxonomy changes the values in `narrative` and `specific_topic`. Start it with a new checkpoint (as shown above) and do not combine its output or checkpoint rows with classifications created under the previous taxonomy.
 
 ### 2. Add and normalize `created_utc`
 

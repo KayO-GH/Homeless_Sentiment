@@ -33,48 +33,36 @@ REQUIRED_COLUMNS = ["post_id", "text", "city", "url"]
 OUTPUT_COLUMNS = REQUIRED_COLUMNS + ["narrative", "specific_topic"]
 
 TOPICS = {
-    "Homelessness as a housing and structural crisis": [
+    "Housing Crisis": [
         "Housing affordability and rising rents",
-        "Eviction, displacement, and housing insecurity",
+        "Eviction, displacement, and insecure tenancy (i.e., across ownership, rent, co-op etc. setups)",
         "Poverty, unemployment, and income insecurity",
-        "Affordable, social, and supportive housing",
-        "Pathways into and prevention of homelessness",
-        "Structural causes of homelessness",
+        "Non-market and supportive housing solutions",
     ],
-    "Homelessness as a public-order and urban-space crisis": [
-        "Encampments and tents in public spaces",
-        "Encampment removals and displacement",
-        "Public safety and perceived disorder",
-        "Crime, harassment, and property impacts",
-        "Open drug use and visible substance use",
-        "Downtown and neighbourhood change",
-        "Parks, transit, and contested public space",
-        "Conflicts between housed and unhoused residents",
+    "Public Life Crisis": [
+        "Encampments in public space",
+        "Encampment clearance, displacement",
+        "Perceived lack of public order, safety",
+        "Reported harassment, property damage",
+        "Visible substance use, drug-related activity",
+        "Neighbourhood change and public-space contestation",
     ],
-    "Homelessness as a humanitarian and lived-experience crisis": [
-        "First-person experience of homelessness",
-        "Imminent homelessness and requests for help",
-        "Access to food, hygiene, employment, and basic needs",
-        "Shelters, warming centres, and emergency accommodation",
-        "Shelter conditions, barriers, and safety",
-        "Community aid, donations, and volunteering",
-        "Outreach, mutual aid, and direct assistance",
-        "Compassion, empathy, and human dignity",
-        "Stigma, discrimination, and dehumanization",
+    "(Society) Moral Crisis": [
+        "First-person accounts of homelessness",
+        "Requests for assistance due to imminent homelessness",
+        "Access to food, hygiene, employment, and other basic needs",
+        "Emergency shelter access, shelter conditions, and shelter health and safety",
+        "Community aid, outreach, volunteering and direct assistance",
+        "Human dignity, compassion, and stigmatization",
         "Health, trauma, and vulnerability",
     ],
-    "Homelessness as a governance and policy challenge": [
-        "Municipal government and city council responses",
-        "Provincial or federal government responses",
-        "Policing, bylaws, and enforcement",
-        "Homelessness funding and public spending",
-        "Mental-health and addiction services",
-        "Harm reduction and overdose responses",
-        "Treatment, rehabilitation, and involuntary care",
-        "Housing First and long-term policy solutions",
-        "Shelter policy and service-system capacity",
-        "Government accountability and policy failure",
+    "Governance and Policy Challenge": [
+        "Government responsibility, accountability, policy failure, and intergovernmental coordination",
         "Debates over homelessness policy solutions",
+        "Public funding and resource allocation",
+        "Shelter-system capacity and service delivery",
+        "Policing, bylaws, and enforcement",
+        "Mental-health, addiction, harm-reduction and rehabilitation responses",
     ],
     "Unclear or mixed": [
         "Multiple narratives with no dominant frame",
@@ -99,7 +87,15 @@ TOPICS = {
 SYSTEM_PROMPT = """You are a meticulous research classifier for Canadian Reddit posts.
 Classify the post's dominant substantive meaning into exactly one permitted specific topic. The narrative will be derived from the selected topic after classification. Use text as primary evidence and city only as contextual evidence. Never use URLs or infer facts absent from text.
 
-Classify framing, not keyword occurrence. Choose the central issue, argument, experience, request, or policy response; use Unclear or mixed sparingly. A personal account is lived experience when that is the authorâ€™s main purpose. If institutional action is the main focus, use governance. Distinguish addiction as a cause or service need (Mental-health and addiction services) from visible drug use as a public-space problem (Open drug use and visible substance use). Do not treat animal shelters, bus shelters, recreational camping, protest encampments, shelter-in-place notices, or unrelated physical shelters as homelessness without a clear connection to people experiencing homelessness.
+Classify framing, not keyword occurrence. Choose the central issue, argument, experience, request, or policy response; use Unclear or mixed sparingly.
+
+Use these theme definitions:
+- Housing Crisis: primarily explains homelessness through housing markets, poverty, inequality, income, employment, eviction, inadequate housing supply, or other structural conditions.
+- Public Life Crisis: primarily discusses encampments, public-space use, safety, cleanliness, crime, neighbourhood impacts, downtown conditions, or conflicts over shared urban spaces.
+- (Society) Moral Crisis: centers shared lived experiences, immediate needs, survival, help-seeking, humanitarian assistance, shelter experiences, empathy, stigma, dignity, or direct community support.
+- Governance and Policy Challenge: focuses on what governments, police, health systems, service providers, or public institutions are doing or should do.
+
+When both could apply, classify visible substance use or drug-related activity as Public Life Crisis when the focus is a public-space impact; classify mental-health, addiction, harm-reduction, or rehabilitation responses as Governance and Policy Challenge when the focus is an institutional or service response. Exclude posts that are not about homelessness, even if they contain relevant keywords. Use Not relevant to homelessness for these.
 
 Allowed narrative-to-topic mapping:
 """ + json.dumps(TOPICS, ensure_ascii=False, indent=2)
@@ -203,7 +199,12 @@ def validate(source: pd.DataFrame, output: pd.DataFrame) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--input", required=True, type=Path)
+    parser.add_argument(
+        "--input",
+        default="homeless_reddit_04-05-2026_clean_posts.csv",
+        type=Path,
+        help="Source CSV (default: homeless_reddit_04-05-2026_clean_posts.csv).",
+    )
     parser.add_argument("--output", default="homelessness_narrative_topic_classification.csv", type=Path)
     parser.add_argument("--checkpoint", default="homelessness_classification_checkpoint.jsonl", type=Path)
     parser.add_argument(
