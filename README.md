@@ -120,7 +120,17 @@ Create an aggregate cloud for all relevant narrative categories plus one cloud f
 uv run python 04_word_clouds.py
 ```
 
-The script reads `homelessness_narrative_topic_classification.csv` by default and saves the following PNGs to `wordclouds/`: `all_narratives.png`, `housing_crisis.png`, `public_life_crisis.png`, `society_moral_crisis.png`, and `governance_and_policy_challenge.png`. It removes English and French stopwords as well as homelessness terms that would otherwise dominate the clouds. Use `--input <csv>` and `--output-dir <directory>` to override the default paths.
+The word-cloud workflow detects English and French spans with Lingua,
+excludes spans confidently identified as another language, and lemmatizes the
+remaining English/French text with spaCy. Uncertain or unidentified spans are
+kept. Install the language models once before running it:
+
+```bash
+python -m spacy download en_core_web_sm
+python -m spacy download fr_core_news_sm
+```
+
+The script reads `homelessness_narrative_topic_classification.csv` by default and saves the following PNGs to `wordclouds/`: `all_narratives.png`, `housing_crisis.png`, `public_life_crisis.png`, `society_moral_crisis.png`, and `governance_and_policy_challenge.png`. It removes English and French stopwords, homelessness terms that would otherwise dominate the clouds, and the additional words listed in the committed `config/wordcloud_excluded_words.txt` and `config/wordcloud_geography_excluded_words.txt` files. Use `--input <csv>` and `--output-dir <directory>` to override the default paths.
 
 ## Project Structure
 

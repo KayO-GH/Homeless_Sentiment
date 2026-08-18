@@ -1,0 +1,23 @@
+# Geography-specific words excluded from word-cloud frequencies.
+Canada
+Canadian
+Toronto
+Montréal
+Montreal
+Vancouver
+Hamilton
+Ottawa
+Calgary
+Victoria
+Winnipeg
+Edmonton
+Halifax
+London
+Quebec
+Québec
+Sudbury
+Ontario
+city
+cities
+province
+hastings

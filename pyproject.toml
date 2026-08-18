@@ -27,4 +27,7 @@ dependencies = [
     "umap-learn>=0.5.12",
     "nltk>=3.9.2",
     "wordcloud>=1.9.4",
+    "lingua-language-detector>=2.2.0",
+    "spacy>=3.8.0",
+    "tqdm>=4.67.0",
 ]
